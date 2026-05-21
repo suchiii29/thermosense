@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Thermometer, Settings, Menu, X, ShieldAlert, Cpu } from 'lucide-react';
+import { Thermometer, Menu, X } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenSettings, config }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,20 +55,6 @@ export default function Navbar({ activeTab, setActiveTab, onOpenSettings, config
           </div>
 
           {/* Action buttons (Settings & Mobile Menu toggle) */}
-          <div className="flex items-center gap-2">
-            {/* API Key Status Indicator */}
-            <button
-              onClick={onOpenSettings}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all ${
-                hasMapbox 
-                  ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400 hover:bg-emerald-950/40' 
-                  : 'bg-amber-950/20 border-amber-500/20 text-amber-400 hover:bg-amber-950/40'
-              }`}
-            >
-              <Cpu className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">{hasMapbox ? 'Mapbox Connected' : 'Mapbox Missing'}</span>
-              <Settings className="h-3.5 w-3.5 ml-0.5 animate-spin-slow" />
-            </button>
 
             {/* Mobile Menu Button */}
             <button

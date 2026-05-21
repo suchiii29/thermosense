@@ -27,26 +27,19 @@ export default function InterventionSimulator({ activeZone, config }) {
     if (!activeZone) return;
 
     const originalTemp = activeZone.temperature;
-    const builtRatio = activeZone.metrics.builtRatio / 100; // fraction
+    const builtRatio = activeZone.metrics.builtRatio / 100;
     
-    // Ambient temperature reductions based on thermodynamic microclimate models:
-    // 1. Cool Roofs: Max 1.8°C reduction (if 100% roofs are white-painted in a highly built zone)
-    const coolRoofReduction = (coolRoofs / 100) * builtRatio * 1.8;
-    
-    // 2. Urban Forestry: Max 3.2°C reduction (canopy shade and transpiration cooling)
-    const forestryReduction = (forestry / 100) * 3.2;
-    
-    // 3. Reflective Pavement: Max 1.2°C reduction in pavement radiation
-    const pavementReduction = (pavements / 100) * builtRatio * 1.2;
+    // Weighted microclimate impact factors
+    const coolRoofDelta = (coolRoofs / 100) * (builtRatio * 2.0);
+    const forestryDelta = (forestry / 100) * 3.5;
+    const pavementDelta = (pavements / 100) * (builtRatio * 1.5);
 
-    const totalReduction = Number((coolRoofReduction + forestryReduction + pavementReduction).toFixed(2));
+    const totalReduction = Number((coolRoofDelta + forestryDelta + pavementDelta).toFixed(2));
     const simulatedTemp = Number((originalTemp - totalReduction).toFixed(2));
     const simulatedAnomaly = Number((activeZone.tempAnomaly - totalReduction).toFixed(2));
 
-    // Calculate new risk score
-    // Risk is proportional to anomaly, builtRatio, and inversely proportional to greenSpaceAccess / vegetation
     const originalRisk = activeZone.riskScore;
-    const riskReductionRatio = (totalReduction / (activeZone.tempAnomaly + 2)) * 0.8; // scaling
+    const riskReductionRatio = (totalReduction / (activeZone.tempAnomaly + 2)) * 0.8;
     const simulatedRisk = Math.max(10, Math.round(originalRisk * (1 - riskReductionRatio)));
 
     setSimResults({
