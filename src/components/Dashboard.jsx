@@ -6,21 +6,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CITIES from '../data/cities';
 
-const handleSliderChange = (key, value) => {
-  switch (key) {
-    case 'coolRoofs':
-      setCoolRoofs(value);
-      break;
-    case 'forestry':
-      setForestry(value);
-      break;
-    case 'pavements':
-      setPavements(value);
-      break;
-    default:
-      break;
-  }
-};
+// NOTE: Slider state management moved to InterventionSimulator component.
+// The handleSliderChange function was unused here and caused reference errors.
+
 
 export default function Dashboard({ activeCity, setActiveCity, activeZone, setActiveZone, config, onOpenSettings }) {
   const mapContainerRef = useRef(null);
@@ -59,12 +47,8 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
   }, [activeZone]);
 
   // Utility to get zone fill color based on anomaly or heat index
-  const getZoneColor = (zone) => {
-    const val = zone.tempAnomaly ?? 0;
-    if (val > 40) return 'red';
-    if (val > 37) return 'orange';
-    return 'blue';
-  };
+  // getZoneColor was unused; color logic now handled by getAnomalyColor.
+
 
   // Draw simple polygon shapes if provided (runs after map is initialized)
   useEffect(() => {
@@ -72,7 +56,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
     console.log('Drawing zones', zones.map(z => ({ id: z.id, hasPolygon: !!z.polygon })));
     zones.forEach((z) => {
       if (z.polygon && Array.isArray(z.polygon)) {
-        const poly = L.polygon(z.polygon, { color: getZoneColor(z), fillOpacity: 0.4 });
+        const poly = L.polygon(z.polygon, { color: getAnomalyColor(z.tempAnomaly), fillOpacity: 0.4 });
         poly.on('click', () => setActiveZone(z));
         poly.addTo(mapRef.current);
       }
@@ -187,7 +171,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
               {Object.keys(CITIES).map(cKey => (
                 <button
                   key={cKey}
-                  onChange={(e) => handleSliderChange('coolRoofs', Number(e.target.value))}
+                  onClick={() => setActiveCity(cKey)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${activeCity === cKey ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-md shadow-orange-500/10' : 'bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-slate-100'}`}
                 >
                   {CITIES[cKey].name}
@@ -248,35 +232,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
 
               {/* Surface attributes */}
               <div className="space-y-2.5 pt-2 border-t border-brand-border/40">
-                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                  // Compute totalDelta based on base weights and cap at 4.0
-                  const baseWeights = {
-                    coolRoofs: 1.1,
-                    forestry: 1.8,
-                    pavements: 0.7,
-                  };
-                  const totalDelta = Math.min(4.0,
-                    (coolRoofs / 100) * baseWeights.coolRoofs +
-                    (forestry / 100) * baseWeights.forestry +
-                    (pavements / 100) * baseWeights.pavements
-                  );
-                  
-                  // Simulate temperature and risk
-                  const simulatedTemp = Number((activeZone.temperature - totalDelta).toFixed(2));
-                  const simulatedRisk = Math.max(0, Math.round(activeZone.riskScore - (totalDelta / 4.0) * activeZone.riskScore));
-                  
-                  const simResults = {
-                    originalTemp: activeZone.temperature,
-                    simulatedTemp,
-                    reduction: totalDelta,
-                    originalRisk: activeZone.riskScore,
-                    simulatedRisk,
-                    originalAnomaly: activeZone.tempAnomaly,
-                    simulatedAnomaly: Number((activeZone.tempAnomaly - totalDelta).toFixed(2)),
-                    originalVegetation: activeZone.metrics.vegetationCover,
-                    simulatedVegetation: Math.min(100, activeZone.metrics.vegetationCover + Math.round(forestry * 0.4))
-                  };
-                </h4>
+                <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2">Surface Characteristics</h4>
                 {/* Albedo */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-400">
