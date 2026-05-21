@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label, Cell } from 'recharts';
-import { ShieldAlert, Info, Scale, Users, TrendingUp, Sparkles, MapPin } from 'lucide-react';
+import { ShieldAlert, Info, Scale, Users, TrendingUp, MapPin } from 'lucide-react';
 import CITIES from '../data/cities';
 
 export default function EquityOverlay({ activeCity, activeZone, setActiveZone }) {

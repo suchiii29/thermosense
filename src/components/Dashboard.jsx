@@ -1,39 +1,29 @@
-// Dashboard.jsx - Leaflet implementation
-import React, { useEffect, useRef } from 'react';
+// Dashboard.jsx – Uses LeafletMap component (no inline Leaflet code)
+import { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, Info, Thermometer, ShieldAlert, Layers, Wind, Eye, Sparkles } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import CITIES from '../data/cities';
+import { Info, Thermometer, Layers, Wind } from 'lucide-react';
+import { CITIES } from '../data/cities';
+import LeafletMap from './LeafletMap';
 
-// NOTE: Slider state management moved to InterventionSimulator component.
-// The handleSliderChange function was unused here and caused reference errors.
+// cities.js stores center as [lng, lat] (GeoJSON order).
+// Leaflet needs [lat, lng]. This helper swaps the pair.
+const toLeafletCenter = (center) => [center[1], center[0]];
 
-
-export default function Dashboard({ activeCity, setActiveCity, activeZone, setActiveZone, config, onOpenSettings }) {
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const forecastDataRef = useRef([]);
-  const [forecastData, setForecastData] = React.useState([]);
-  const [viewMode, setViewMode] = React.useState('temperature'); // currently unused but kept for future features
-
+export default function Dashboard({ activeCity, onCityChange, activeZone, setActiveZone }) {
   const cityData = CITIES[activeCity];
   const zones = cityData.zones;
 
-  // Set default active zone when city changes
-  useEffect(() => {
-    const defaultZone = zones.find(z => z.id.startsWith(activeCity)) || zones[0];
-    setActiveZone(defaultZone);
-  }, [activeCity, zones, setActiveZone]);
+  // Compute Leaflet-order center once per city
+  const leafletCenter = useMemo(() => toLeafletCenter(cityData.center), [cityData.center]);
 
-  // Generate 48‑hour forecast data
-  useEffect(() => {
-    if (!activeZone) return;
+  // 48-hour forecast from activeZone
+  const forecastData = useMemo(() => {
+    if (!activeZone) return [];
     const baseTemp = activeZone.temperature;
     const now = new Date();
     const data = [];
     for (let i = 0; i < 48; i++) {
-      const hourDate = new Date(now.getTime() + i * 60 * 60 * 1000);
+      const hourDate = new Date(now.getTime() + i * 3600000);
       const hour = hourDate.getHours();
       const diurnalOffset = Math.sin((hour - 9) * Math.PI / 12) * 4.5;
       const temp = Number((baseTemp + diurnalOffset).toFixed(1));
@@ -43,106 +33,8 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
       const dayStr = i < 24 ? 'Today' : 'Tomorrow';
       data.push({ time: `${dayStr} ${timeStr}`, temp, apparent: apparentTemp, dangerThreshold: 40 });
     }
-    setForecastData(data);
+    return data;
   }, [activeZone]);
-
-  // Utility to get zone fill color based on anomaly or heat index
-  // getZoneColor was unused; color logic now handled by getAnomalyColor.
-
-
-  // Draw simple polygon shapes if provided (runs after map is initialized)
-  useEffect(() => {
-    if (!mapRef.current) return;
-    console.log('Drawing zones', zones.map(z => ({ id: z.id, hasPolygon: !!z.polygon })));
-    zones.forEach((z) => {
-      if (z.polygon && Array.isArray(z.polygon)) {
-        const poly = L.polygon(z.polygon, { color: getAnomalyColor(z.tempAnomaly), fillOpacity: 0.4 });
-        poly.on('click', () => setActiveZone(z));
-        poly.addTo(mapRef.current);
-      }
-    });
-    // No cleanup needed; Leaflet handles layer removal on map destroy
-  }, [zones, mapRef.current]);
-
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-    const map = L.map(mapContainerRef.current, {
-      center: cityData.center,
-      zoom: cityData.zoom,
-      zoomControl: false,
-      attributionControl: false,
-      maxZoom: 18,
-      minZoom: 5,
-      scrollWheelZoom: true,
-    });
-    mapRef.current = map;
-
-    // OSM tile layer with dark filter to match theme
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
-
-    // Create GeoJSON layer for zones
-    const geoJsonLayer = L.geoJSON(
-      {
-        type: 'FeatureCollection',
-        features: zones.map(z => ({
-          type: 'Feature',
-          geometry: z.geojson.geometry,
-          properties: {
-            id: z.id,
-            name: z.name,
-            anomaly: z.tempAnomaly,
-            risk: z.riskScore,
-            temperature: z.temperature,
-          }
-        }))
-      },
-      {
-        style: feature => ({
-          fillColor: getAnomalyColor(feature.properties.anomaly),
-          weight: 1,
-          opacity: 0.6,
-          color: '#ffffff',
-          fillOpacity: 0.4
-        }),
-        onEachFeature: (feature, layer) => {
-          layer.on({
-            click: () => {
-              const zone = zones.find(z => z.id === feature.properties.id);
-              if (zone) setActiveZone(zone);
-            },
-            mouseover: () => layer.setStyle({ weight: 2, opacity: 0.9 }),
-            mouseout: () => layer.setStyle({ weight: 1, opacity: 0.6 })
-          });
-        }
-      }
-    ).addTo(map);
-
-    // Fit bounds to city zones
-    map.fitBounds(geoJsonLayer.getBounds(), { padding: [20, 20] });
-
-    // Cleanup on unmount
-    return () => {
-      map.remove();
-    };
-  }, [activeCity, zones]);
-
-  // Update map when city changes (fly to new center)
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.flyTo(cityData.center, cityData.zoom, { duration: 1.5 });
-    }
-  }, [activeCity, cityData]);
-
-  // Helper to map anomaly value to a color (used for Leaflet fill)
-  const getAnomalyColor = (val) => {
-    if (val < 0) return '#0284c7'; // cool blue
-    if (val < 3) return '#10b981'; // emerald
-    if (val < 5) return '#f59e0b'; // amber
-    if (val < 7) return '#f97316'; // orange
-    return '#ef4444'; // red hot
-  };
 
   const getRiskBadge = (score) => {
     if (score < 30) return <span className="px-2 py-0.5 text-[10px] rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Low Risk</span>;
@@ -171,7 +63,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
               {Object.keys(CITIES).map(cKey => (
                 <button
                   key={cKey}
-                  onClick={() => setActiveCity(cKey)}
+                  onClick={() => onCityChange(cKey)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${activeCity === cKey ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-md shadow-orange-500/10' : 'bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-slate-100'}`}
                 >
                   {CITIES[cKey].name}
@@ -184,16 +76,23 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
           </div>
         </div>
 
-        {/* Leaflet map container */}
+        {/* Leaflet map – NO key prop, never remounts */}
         <div className="relative flex-1 rounded-2xl border border-brand-border overflow-hidden bg-slate-950">
-          <div ref={mapContainerRef} className="w-full h-full" />
+          <LeafletMap
+            cityCenter={leafletCenter}
+            cityZoom={cityData.zoom}
+            zones={zones}
+            selectedZone={activeZone}
+            onZoneSelect={setActiveZone}
+          />
           {/* Thermal legend overlay */}
           <div className="absolute bottom-4 right-4 z-10 p-3 bg-slate-950/80 backdrop-blur-md border border-brand-border rounded-xl shadow-2xl text-[10px] space-y-2">
-            <span className="font-semibold text-slate-300 block mb-1">Thermal Anomaly (°C)</span>
-            <div className="w-40 h-2 rounded bg-thermal-gradient" />
-            <div className="flex justify-between text-slate-500 font-mono">
-              <span>Cool (&lt;0)</span>
-              <span>Extreme (&gt;7)</span>
+            <span className="font-semibold text-slate-300 block mb-1">Temperature (°C)</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block bg-[#7c3aed]" /><span className="text-slate-400">&gt;43°C — Extreme</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block bg-[#ef4444]" /><span className="text-slate-400">&gt;40°C — High</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block bg-[#f59e0b]" /><span className="text-slate-400">&gt;37°C — Moderate</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm inline-block bg-[#3b82f6]" /><span className="text-slate-400">&lt;37°C — Normal</span></div>
             </div>
           </div>
         </div>
@@ -233,7 +132,6 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
               {/* Surface attributes */}
               <div className="space-y-2.5 pt-2 border-t border-brand-border/40">
                 <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2">Surface Characteristics</h4>
-                {/* Albedo */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-400">
                     <span>Surface Albedo (Reflectance)</span>
@@ -243,7 +141,6 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
                     <div className="bg-brand-highlight h-1.5 rounded-full" style={{ width: `${activeZone.metrics.albedo * 100}%` }} />
                   </div>
                 </div>
-                {/* Vegetation */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-400">
                     <span>Vegetation Canopy Cover</span>
@@ -253,7 +150,6 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
                     <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${activeZone.metrics.vegetationCover}%` }} />
                   </div>
                 </div>
-                {/* Built ratio */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-400">
                     <span>Paved / Built‑up Ratio</span>
@@ -266,7 +162,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
               </div>
             </div>
 
-            {/* 48‑hour forecast chart */}
+            {/* 48-hour forecast chart */}
             <div className="glass-card rounded-2xl border border-brand-border p-5 flex-1 flex flex-col space-y-4">
               <div className="flex justify-between items-center">
                 <div>
@@ -309,7 +205,7 @@ export default function Dashboard({ activeCity, setActiveCity, activeZone, setAc
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-500 text-xs glass-card rounded-2xl border border-brand-border p-6 text-center">
-            Click a zone on the map or in the fallback grid list to analyze.
+            Click a zone on the map to analyze.
           </div>
         )}
       </div>

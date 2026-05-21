@@ -90,7 +90,7 @@ async function callGeminiDirect(contents, apiKey, generationConfig = {}) {
     return parseGeminiResponse(data);
   } catch (error) {
     console.error('Direct Gemini call failed:', error);
-    throw new Error(`Gemini connection failed: ${error.message}`);
+    throw new Error(`Gemini connection failed: ${error.message}`, { cause: error });
   }
 }
 
@@ -109,7 +109,7 @@ function parseGeminiResponse(apiResponse) {
     throw new Error('Gemini response did not contain text content.');
   } catch (err) {
     console.error('Parsing error of Gemini response:', err, apiResponse);
-    throw new Error('Failed to parse Gemini model response.');
+    throw new Error('Failed to parse Gemini model response.', { cause: err });
   }
 }
 

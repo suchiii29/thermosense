@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Key, MapPin, Eye, EyeOff, Save, CheckCircle, Info } from 'lucide-react';
 
 export default function SettingsModal({ isOpen, onClose, onSave, config }) {
@@ -7,11 +7,6 @@ export default function SettingsModal({ isOpen, onClose, onSave, config }) {
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showMapboxToken, setShowMapboxToken] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  useEffect(() => {
-    setMapboxToken(config.mapboxToken || '');
-    setGeminiKey(config.geminiKey || '');
-  }, [config, isOpen]);
 
   if (!isOpen) return null;
 

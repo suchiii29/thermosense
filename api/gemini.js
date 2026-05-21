@@ -1,3 +1,4 @@
+/* global process */
 // Rely on native global fetch in Node.js 18+ (no need to import node-fetch)
 
 // Simple in-memory rate limiting store (best-effort per serverless instance)

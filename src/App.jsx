@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import InterventionSimulator from './components/InterventionSimulator';
@@ -11,31 +11,30 @@ import CITIES from './data/cities';
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeCity, setActiveCity] = useState('delhi');
-  const [activeZone, setActiveZone] = useState(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [config, setConfig] = useState({
-    mapboxToken: '',
-    geminiKey: ''
-  });
-
-  // Load custom configurations from localStorage on mount
-  useEffect(() => {
-    const localMapbox = localStorage.getItem('mapbox_access_token');
-    const localGemini = localStorage.getItem('gemini_api_key');
-    
-    // Set fallback to env variable if exists
+  
+  const [config, setConfig] = useState(() => {
+    const localMapbox = typeof window !== 'undefined' ? localStorage.getItem('mapbox_access_token') : null;
+    const localGemini = typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') : null;
     const mapboxToken = localMapbox || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
     const geminiKey = localGemini || import.meta.env.GEMINI_API_KEY || '';
+    return { mapboxToken, geminiKey };
+  });
 
-    setConfig({ mapboxToken, geminiKey });
-  }, []);
+  const [activeZone, setActiveZone] = useState(() => {
+    const cityData = CITIES['delhi'];
+    return cityData ? cityData.zones[0] : null;
+  });
 
-  // Set default active zone when city changes
-  useEffect(() => {
-    const cityData = CITIES[activeCity];
-    const defaultZone = cityData.zones[0];
-    setActiveZone(defaultZone);
-  }, [activeCity]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Wrapper function to change city and active zone together, avoiding useEffect cascading renders
+  const handleSelectCity = (cityKey) => {
+    setActiveCity(cityKey);
+    const cityData = CITIES[cityKey];
+    if (cityData && cityData.zones && cityData.zones.length > 0) {
+      setActiveZone(cityData.zones[0]);
+    }
+  };
 
   // Handle configuration saves
   const handleSaveConfig = ({ mapboxToken, geminiKey }) => {
@@ -51,16 +50,15 @@ export default function App() {
         return (
           <Dashboard
             activeCity={activeCity}
-            setActiveCity={setActiveCity}
+            setActiveCity={handleSelectCity}
             activeZone={activeZone}
             setActiveZone={setActiveZone}
-            config={config}
-            onOpenSettings={() => setSettingsOpen(true)}
           />
         );
       case 'simulator':
         return (
           <InterventionSimulator
+            key={activeZone?.id || 'none'}
             activeZone={activeZone}
             config={config}
           />
@@ -114,12 +112,14 @@ export default function App() {
       </main>
 
       {/* Settings Configuration Modal */}
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onSave={handleSaveConfig}
-        config={config}
-      />
+      {settingsOpen && (
+        <SettingsModal
+          isOpen={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          onSave={handleSaveConfig}
+          config={config}
+        />
+      )}
     </div>
   );
 }

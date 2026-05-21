@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Sliders, Thermometer, ShieldCheck, TreePine, Sparkles, Building, Paintbrush, HelpCircle, Loader2 } from 'lucide-react';
 import { callGemini, buildTextPromptPayload } from '../utils/gemini';
@@ -8,23 +8,13 @@ export default function InterventionSimulator({ activeZone, config }) {
   const [forestry, setForestry] = useState(0);   // 0 to 100 %
   const [pavements, setPavements] = useState(0); // 0 to 100 %
   
-  const [simResults, setSimResults] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiError, setAiError] = useState('');
 
-  // Reset simulator values when the active zone changes
-  useEffect(() => {
-    setCoolRoofs(0);
-    setForestry(0);
-    setPavements(0);
-    setAiAnalysis('');
-    setAiError('');
-  }, [activeZone]);
-
-  // Run scientific microclimatic adjustment simulation
-  useEffect(() => {
-    if (!activeZone) return;
+  // Run scientific microclimatic adjustment simulation via useMemo to avoid cascading renders
+  const simResults = useMemo(() => {
+    if (!activeZone) return null;
 
     const originalTemp = activeZone.temperature;
     const builtRatio = activeZone.metrics.builtRatio / 100;
@@ -42,7 +32,7 @@ export default function InterventionSimulator({ activeZone, config }) {
     const riskReductionRatio = (totalReduction / (activeZone.tempAnomaly + 2)) * 0.8;
     const simulatedRisk = Math.max(10, Math.round(originalRisk * (1 - riskReductionRatio)));
 
-    setSimResults({
+    return {
       originalTemp,
       simulatedTemp,
       reduction: totalReduction,
@@ -52,8 +42,7 @@ export default function InterventionSimulator({ activeZone, config }) {
       simulatedAnomaly,
       originalVegetation: activeZone.metrics.vegetationCover,
       simulatedVegetation: Math.min(100, activeZone.metrics.vegetationCover + Math.round(forestry * 0.4))
-    });
-
+    };
   }, [coolRoofs, forestry, pavements, activeZone]);
 
   // Ask Gemini to evaluate the specific intervention combination

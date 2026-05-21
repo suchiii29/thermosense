@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Thermometer, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { Thermometer, Settings, Menu, X } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenSettings, config }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenSettings }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const tabs = [
@@ -11,9 +11,6 @@ export default function Navbar({ activeTab, setActiveTab, onOpenSettings, config
     { id: 'equity', label: 'Equity Overlay' },
     { id: 'policy', label: 'Policy Brief Generator' }
   ];
-
-  const hasMapbox = !!config.mapboxToken;
-  const hasGemini = !!(config.geminiKey || true); // Default is true because server side key is expected
 
   return (
     <nav className="sticky top-0 z-40 bg-[#0d1423]/80 backdrop-blur-md border-b border-brand-border">
@@ -55,6 +52,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenSettings, config
           </div>
 
           {/* Action buttons (Settings & Mobile Menu toggle) */}
+          <div className="flex items-center gap-2">
+            {/* Settings Button */}
+            <button
+              onClick={onOpenSettings}
+              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all"
+              aria-label="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
 
             {/* Mobile Menu Button */}
             <button

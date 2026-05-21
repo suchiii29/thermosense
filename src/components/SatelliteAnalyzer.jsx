@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import piexif from 'piexifjs';
-import { Upload, FileImage, Sparkles, Loader2, RefreshCw, AlertTriangle, ShieldCheck, CheckCircle, Info } from 'lucide-react';
+import { Upload, FileImage, Sparkles, Loader2, RefreshCw, AlertTriangle, ShieldCheck, Info } from 'lucide-react';
 import { callGemini, buildMultimodalPayload } from '../utils/gemini';
 
 export default function SatelliteAnalyzer({ config }) {
