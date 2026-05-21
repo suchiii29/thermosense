@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Webkit Scrollbars Customization */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0f19;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+
+  body {
+    background-color: #080b11;
+    color-style: #f8fafc;
+  }
+}
+
+@layer utilities {
+  /* Premium Glassmorphism Card Style */
+  .glass-card {
+    background: rgba(13, 20, 35, 0.7);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glass-card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card-hover:hover {
+    background: rgba(18, 27, 47, 0.85);
+    border-color: rgba(56, 189, 248, 0.25);
+    box-shadow: 0 12px 40px 0 rgba(56, 189, 248, 0.08), 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    transform: translateY(-2px);
+  }
+
+  .glass-panel {
+    background: rgba(8, 12, 22, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .text-glow-thermal-hot {
+    text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  }
+
+  .text-glow-thermal-cool {
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  }
+
+  .border-glow-blue {
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+  }
+
+  .border-glow-red {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  }
+
+  /* Thermal Color Gradients */
+  .bg-thermal-gradient {
+    background: linear-gradient(90deg, #10b981 0%, #f59e0b 40%, #f97316 70%, #ef4444 100%);
+  }
+
+  .bg-radial-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
+  }
+}
+
+/* Custom slider input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #1e293b;
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px; /* Centers thumb on the 6px track */
+  background-color: #38bdf8;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Mapbox specific premium popup overrides */
+.mapboxgl-popup-content {
+  background: rgba(13, 20, 35, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: rgba(13, 20, 35, 0.9) !important;
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: rgba(13, 20, 35, 0.9) !important;
+}
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: rgba(13, 20, 35, 0.9) !important;
+}
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: rgba(13, 20, 35, 0.9) !important;
+}
+
+/* Custom Marker styling */
+.custom-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.8);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  cursor: pointer;
+  animation: pulse 2s infinite;
+}
+
+.leaflet-tile-pane {
+  filter: brightness(0.55) saturate(0.25) hue-rotate(190deg);
+}
+
